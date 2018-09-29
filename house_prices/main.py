@@ -13,8 +13,11 @@ from sklearn.feature_selection import VarianceThreshold
 from sklearn.linear_model import ElasticNetCV, LassoLarsCV
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.preprocessing import FunctionTransformer
 from sklearn.svm import LinearSVR
 from tpot.builtins import StackingEstimator
+from copy import copy
 
 
 def read_data():
@@ -34,13 +37,21 @@ def detailed_analysis(df):
 
 
 def clean_dataset(df):
+    # TODO - this should be reminded based on training data and the same for training and test
     categorical_features_for_median_imput = [
         'Electrical',
-        'KitchenQual'
+        'KitchenQual',
+        'BsmtQual',
+        'BsmtCond'
     ]
-
     for f in categorical_features_for_median_imput:
         df[f].fillna(df[f].mode()[0], inplace=True)
+
+    numeric_features_for_mean_imput = [
+        'TotalBsmtSF'
+    ]
+    for f in numeric_features_for_mean_imput:
+        df[f].fillna(df[f].mean(), inplace=True)
 
     return df
 
@@ -52,13 +63,18 @@ def calculate_features(df):
         "OverallCond",
         "YearBuilt",
         "YrSold",
-        "MoSold"
+        "MoSold",
+        "TotalBsmtSF"
     ]
 
     features_for_label_encoding = [
         "HeatingQC",
         "Electrical",
-        "KitchenQual"
+        "KitchenQual",
+        "ExterQual",
+        "ExterCond",
+        "BsmtQual",
+        "BsmtCond"
     ]
     label_encoded_features = []
     for f in features_for_label_encoding:
@@ -67,7 +83,9 @@ def calculate_features(df):
         label_encoded_features.append(f_code)
 
     dummy_features = [
-        "CentralAir"
+        "CentralAir",
+        "Utilities",
+        "Heating"
     ]
 
     features = raw_features + label_encoded_features + dummy_features
@@ -77,13 +95,22 @@ def calculate_features(df):
 
 def train_model(X_train, y_train):
     #model = linear_model.LinearRegression()
+    # model = make_pipeline(
+    #     StackingEstimator(estimator=ElasticNetCV(l1_ratio=0.45, tol=0.001)),
+    #     StackingEstimator(estimator=GradientBoostingRegressor(alpha=0.9, learning_rate=1.0, loss="quantile", max_depth=8, max_features=0.15000000000000002, min_samples_leaf=19, min_samples_split=12, n_estimators=100, subsample=0.15000000000000002)),
+    #     VarianceThreshold(threshold=0.0005),
+    #     StackingEstimator(estimator=GradientBoostingRegressor(alpha=0.8, learning_rate=0.5, loss="lad", max_depth=1, max_features=0.8, min_samples_leaf=19, min_samples_split=14, n_estimators=100, subsample=0.8500000000000001)),
+    #     PolynomialFeatures(degree=2, include_bias=False, interaction_only=False),
+    #     LassoLarsCV(normalize=True)
+    # )
     model = make_pipeline(
-        StackingEstimator(estimator=ElasticNetCV(l1_ratio=0.45, tol=0.001)),
-        StackingEstimator(estimator=GradientBoostingRegressor(alpha=0.9, learning_rate=1.0, loss="quantile", max_depth=8, max_features=0.15000000000000002, min_samples_leaf=19, min_samples_split=12, n_estimators=100, subsample=0.15000000000000002)),
-        VarianceThreshold(threshold=0.0005),
-        StackingEstimator(estimator=GradientBoostingRegressor(alpha=0.8, learning_rate=0.5, loss="lad", max_depth=1, max_features=0.8, min_samples_leaf=19, min_samples_split=14, n_estimators=100, subsample=0.8500000000000001)),
+        make_union(
+            FunctionTransformer(copy),
+            FunctionTransformer(copy)
+        ),
         PolynomialFeatures(degree=2, include_bias=False, interaction_only=False),
-        LassoLarsCV(normalize=True)
+        StackingEstimator(estimator=LassoLarsCV(normalize=True)),
+        RandomForestRegressor(bootstrap=True, max_features=0.6500000000000001, min_samples_leaf=3, min_samples_split=9, n_estimators=100)
     )
     model.fit(X_train, y_train)
     return model
@@ -104,6 +131,15 @@ def calculate_predictions(model):
     test_raw = pd.read_csv("test.csv")
     test_cleaned = clean_dataset(test_raw)
     test = calculate_features(test_cleaned)
+
+    # TODO - this should be moved to calculate_features
+    for f in ['Utilities_AllPub',
+              'Utilities_NoSeWa', 'Heating_Floor', 'Heating_GasA', 'Heating_GasW',
+              'Heating_Grav', 'Heating_OthW', 'Heating_Wall'
+              ]:
+        if f not in test.columns:
+            test[f] = 0
+
     pred = model.predict(test)
     test_raw["SalePrice"] = pred
     result = test_raw[["Id", "SalePrice"]]
