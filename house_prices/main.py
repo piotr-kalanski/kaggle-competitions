@@ -8,6 +8,13 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from tpot import TPOTRegressor
 from sklearn.preprocessing import LabelEncoder
+from sklearn.pipeline import make_pipeline, make_union
+from sklearn.feature_selection import VarianceThreshold
+from sklearn.linear_model import ElasticNetCV, LassoLarsCV
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.svm import LinearSVR
+from tpot.builtins import StackingEstimator
 
 
 def read_data():
@@ -27,7 +34,14 @@ def detailed_analysis(df):
 
 
 def clean_dataset(df):
-    df['Electrical'].fillna(df['Electrical'].mode()[0], inplace=True)
+    categorical_features_for_median_imput = [
+        'Electrical',
+        'KitchenQual'
+    ]
+
+    for f in categorical_features_for_median_imput:
+        df[f].fillna(df[f].mode()[0], inplace=True)
+
     return df
 
 
@@ -62,7 +76,15 @@ def calculate_features(df):
 
 
 def train_model(X_train, y_train):
-    model = linear_model.LinearRegression()
+    #model = linear_model.LinearRegression()
+    model = make_pipeline(
+        StackingEstimator(estimator=ElasticNetCV(l1_ratio=0.45, tol=0.001)),
+        StackingEstimator(estimator=GradientBoostingRegressor(alpha=0.9, learning_rate=1.0, loss="quantile", max_depth=8, max_features=0.15000000000000002, min_samples_leaf=19, min_samples_split=12, n_estimators=100, subsample=0.15000000000000002)),
+        VarianceThreshold(threshold=0.0005),
+        StackingEstimator(estimator=GradientBoostingRegressor(alpha=0.8, learning_rate=0.5, loss="lad", max_depth=1, max_features=0.8, min_samples_leaf=19, min_samples_split=14, n_estimators=100, subsample=0.8500000000000001)),
+        PolynomialFeatures(degree=2, include_bias=False, interaction_only=False),
+        LassoLarsCV(normalize=True)
+    )
     model.fit(X_train, y_train)
     return model
 
@@ -129,7 +151,7 @@ def auto_ml(X_train, X_test, y_train, y_test):
 
 if __name__ == 'Main':
     train_raw = read_data()
-    dataset_intitial_analysis(train_raw)
+    #dataset_intitial_analysis(train_raw)
     train_cleaned = clean_dataset(train_raw)
     train = calculate_features(train_cleaned)
     X_train, X_test, y_train, y_test = split_train_test(train, train_raw["SalePrice"])
