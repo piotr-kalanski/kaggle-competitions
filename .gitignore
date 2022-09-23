@@ -3,3 +3,4 @@
 
 tpot_checkpoint/
 data/
+__pycache__/
