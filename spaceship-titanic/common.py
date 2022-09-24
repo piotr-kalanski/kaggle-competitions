@@ -52,6 +52,8 @@ def calculate_features(df: pd.DataFrame) -> pd.DataFrame:
         #"Cabin_side",
     ]
 
+    # TODO - add CryoSleep
+
     df_copy = df.copy()
     map_age(df_copy)
     map_vip(df_copy)
