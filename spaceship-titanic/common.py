@@ -2,8 +2,11 @@ import pandas as pd
 import numpy as np
 from sklearn.impute import SimpleImputer
 
-# TODO - change to sklearn pipeline
-# TODO - use fit and transform
+
+def read_train_data() -> pd.DataFrame:
+    return pd.read_csv("data/train.csv")
+
+
 def calculate_features(df: pd.DataFrame) -> pd.DataFrame:
     def map_age(df):
         df.Age = df.Age.fillna(28) # 28 - mean of age
@@ -23,7 +26,7 @@ def calculate_features(df: pd.DataFrame) -> pd.DataFrame:
         df["Cabin_side_is_port"] = df["Cabin"].apply(lambda x: (1 if x.split("/")[2] == 'P' else 0) if type(x) == str else 0)
 
     def map_numbers_to_categories(df, column: str, buckets: int):
-        df[column].fillna(np.mean(df[column]))
+        df[column].fillna(np.mean(df[column]), inplace=True)
         df[column] = pd.qcut(df[column], buckets, labels=False, duplicates="drop")
 
     mapped_features = [
@@ -49,6 +52,8 @@ def calculate_features(df: pd.DataFrame) -> pd.DataFrame:
         "Cabin_deck",
         #"Cabin_side",
     ]
+
+    # TODO - add CryoSleep
 
     df_copy = df.copy()
     map_age(df_copy)
