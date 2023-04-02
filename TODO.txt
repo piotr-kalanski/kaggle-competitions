@@ -1,0 +1,35 @@
+Common functions:
+- Basic data frame analysis - head, na values, summary
+- Automated data profiling - pandas_profiling
+- Basic data preparation, in particular missing values and dummy variables (using fit and transform e.g. sklearn pipeline or custom class)
+- Train simple model (e.g. regression)
+- Model evaluation: metrics, confusion matrix for classification
+- Train more advanced model - e.g. random forest
+- Plot feature importance for random forest
+- Plot loss vs iteration (train and validation sets)
+- Improve feature engineering
+- Plot metric vs sample size (train and validation sets)
+- AutoML - e.g.: tpot
+- Hyper parameter tuning for XGBoost
+- Script for sumbission
+- Neural network (tabnet, fastai, keras)
+- Embeddings from neural network as features to XGBoost
+- Hyper parameter tuning for neural network
+
+Common directory structure (e.g. Kedro)
+- data folder
+- trained models folder - serialized
+- exploratory data analysis notebook
+- preprocessing
+- submission
+- automl
+- hyper parameter tuning
+
+common functions for:
+- tabular data
+- tabular data - regression
+- tabular data - classification
+- image data
+- ...
+
+Check other scripts for debugging from books

@@ -1,7 +1,9 @@
 import pandas as pd
 import numpy as np
+from sklearn.impute import SimpleImputer
 
-
+# TODO - change to sklearn pipeline
+# TODO - use fit and transform
 def calculate_features(df: pd.DataFrame) -> pd.DataFrame:
     def map_age(df):
         df.Age = df.Age.fillna(28) # 28 - mean of age
@@ -56,3 +58,24 @@ def calculate_features(df: pd.DataFrame) -> pd.DataFrame:
         map_numbers_to_categories(df_copy, c, 10)
     features = numbers_to_categories_features + label_encoded_features + dummy_features + mapped_features
     return pd.get_dummies(df_copy[features], columns=dummy_features)
+
+
+# class Preprocessor:
+
+#     FEATURES_TO_IMPUTE = [
+#         "RoomService",
+#         "FoodCourt",
+#         "ShoppingMall",
+#         "Spa",
+#         "VRDeck"
+#     ]
+
+#     def __init__(self):
+#         self._imputer = SimpleImputer(strategy="median")
+
+#     def fit(self, train_data):
+#         self._imputer.fit(train_data[self.FEATURES_TO_IMPUTE])
+
+#     def transform(self, data):
+#         data = calculate_features(data)
+#         return self._imputer.transform(data)
